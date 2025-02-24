@@ -42,12 +42,12 @@ class Counter with ChangeNotifier {
   int get value => _value;
 
   void increment() {
-    _value += 1;
+    _value = min(100, _value + 1);
     notifyListeners();
   }
 
   void decrement() {
-    _value -= 1;
+    _value = max(0, _value - 1);
     notifyListeners();
   }
 
@@ -62,90 +62,92 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: new ThemeData(scaffoldBackgroundColor: const Color(0xFFEFEFEF)),
-      home: const MyHomePage(),
-    );
+    return MaterialApp(title: 'Flutter Demo', home: const MyHomePage());
   }
 }
 
 class MyHomePage extends StatelessWidget {
   const MyHomePage({super.key});
-  static List<String> milestones = [
-    "Baby",
-    "Child",
-    "Teenager",
-    "The Dark Ages",
-    "About time for Fatherhood",
-    "Unc",
-    "Retirement",
-    "How Old am I?",
-  ];
-  String findMilestones(int value) {
-    if (value < 20) {
-      return milestones[((7 + value) ~/ 10).clamp(0, 2)];
+
+  Color getBackgroundColor(int age) {
+    if (age >= 0 && age <= 12) {
+      return Colors.lightBlue;
+    } else if (age >= 13 && age <= 19) {
+      return Colors.lightGreen;
+    } else if (age >= 20 && age <= 30) {
+      return Colors.limeAccent;
+    } else if (age >= 31 && age <= 50) {
+      return Colors.orange;
     } else {
-      return milestones[min(milestones.length - 1, (value ~/ 10) + 1)];
+      return Colors.grey;
+    }
+  }
+
+  String getMessage(int age) {
+    if (age >= 0 && age <= 12) {
+      return "child";
+    } else if (age >= 13 && age <= 19) {
+      return "teenager";
+    } else if (age >= 20 && age <= 30) {
+      return "the dark age";
+    } else if (age >= 31 && age <= 50) {
+      return "unc";
+    } else {
+      return "how old am i?";
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Age counter')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Consumer<Counter>(
-              builder:
-                  (context, counter, child) =>
-                      Text(findMilestones(counter.value)),
+    return Consumer<Counter>(
+      builder: (context, counter, child) {
+        return Scaffold(
+          backgroundColor: getBackgroundColor(counter.value),
+          appBar: AppBar(title: const Text('Age Counter')),
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  getMessage(counter.value),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  'I am ${counter.value} years old',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                Slider(
+                  min: 0,
+                  max: 100,
+                  value: counter.value.toDouble(),
+                  onChanged: (value) {
+                    counter.setValue(value);
+                  },
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    counter.increment();
+                  },
+                  child: Text('Increase Age'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    counter.decrement();
+                  },
+                  child: Text('Reduce Age'),
+                ),
+              ],
             ),
-            Consumer<Counter>(
-              builder:
-                  (context, counter, child) => Text(
-                    ' I am ${counter.value} years old',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-            ),
-            Consumer<Counter>(
-              builder:
-                  (context, counter, child) => Slider(
-                    min: 0,
-                    max: 100,
-                    value: counter.value.toDouble(),
-                    onChanged: (value) {
-                      counter.setValue(value);
-                    },
-                  ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                var counter = context.read<Counter>();
-                counter.increment();
-              },
-              child: Text('Increase Age'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                var counter = context.read<Counter>();
-                counter.decrement();
-              },
-              child: Text('Reduce Age'),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          var counter = context.read<Counter>();
-          counter.increment();
-        },
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () {
+              counter.increment();
+            },
+            tooltip: 'Increment',
+            child: const Icon(Icons.add),
+          ),
+        );
+      },
     );
   }
 }
